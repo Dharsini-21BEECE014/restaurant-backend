@@ -16,16 +16,28 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // CORS
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("AllowReactApp", policy =>
+//     {
+//         policy.WithOrigins(
+//                 "http://localhost:3000",
+//                 "https://restaurant-booking-j4kf.onrender.com"
+//             )
+//             .AllowAnyHeader()
+//             .AllowAnyMethod();
+//     });
+// });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",
-                "https://restaurant-booking-j4kf.onrender.com"
-            )
+        policy
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .SetIsOriginAllowed(origin =>
+                origin == "https://restaurant-booking-j4kf.onrender.com"
+            );
     });
 });
 
