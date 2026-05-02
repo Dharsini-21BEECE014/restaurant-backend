@@ -22,14 +22,14 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:3000",
-                "https://your-frontend.onrender.com"
+                "https://restaurant-booking-j4kf.onrender.com"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
 
-// DB Context (IMPORTANT FIX: null-safe)
+// DB Context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (string.IsNullOrWhiteSpace(connectionString))
