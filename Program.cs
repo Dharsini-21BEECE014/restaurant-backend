@@ -103,9 +103,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp", policy =>
     {
         policy
+            .AllowAnyOrigin()
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .SetIsOriginAllowed(_ => true); // 🔥 FIX ALL DEPLOYMENT CORS ISSUES
+            .AllowAnyMethod();
+            // .SetIsOriginAllowed(_ => true); // 🔥 FIX ALL DEPLOYMENT CORS ISSUES
     });
 });
 
@@ -135,7 +136,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+app.UseRouting();
 // IMPORTANT ORDER
 app.UseCors("AllowReactApp");
 
