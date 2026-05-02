@@ -34,78 +34,141 @@ namespace RestaurantAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateBooking(CreateBookingRequest request)
         {
-            Console.WriteLine("🔥 CREATE BOOKING HIT");
-
-            Console.WriteLine($"Name: {request.CustomerName}");
-            Console.WriteLine($"Phone: {request.CustomerPhone}");
-            Console.WriteLine($"TableId: {request.TableId}");
-            Console.WriteLine($"Guests: {request.GuestCount}");
-
-            var table = await _context.DiningTables.FindAsync(request.TableId);
-
-            if (table == null)
+            try
             {
-                Console.WriteLine("❌ Table not found");
-                return NotFound("Table not found");
+                Console.WriteLine("🔥 Booking API called");
+                Console.WriteLine($"TableId: {request.TableId}");
+                Console.WriteLine($"GuestCount: {request.GuestCount}");
+
+                var table = await _context.DiningTables.FindAsync(request.TableId);
+
+                if (table == null)
+                {
+                    Console.WriteLine("❌ Table not found");
+                    return NotFound("Table not found");
+                }
+
+                if (request.BookingDate < DateTime.UtcNow)
+                    return BadRequest("Booking date must be future");
+
+                var lastBooking = await _context.Bookings
+                    .OrderByDescending(b => b.BookingId)
+                    .Select(b => b.BookingNumber)
+                    .FirstOrDefaultAsync();
+
+                int next = 1;
+
+                if (!string.IsNullOrEmpty(lastBooking))
+                {
+                    var numberPart = lastBooking.Replace("BKG-", "");
+                    if (int.TryParse(numberPart, out int parsed))
+                        next = parsed + 1;
+                }
+
+                string bookingNumber = $"BKG-{next:D4}";
+
+                var booking = new Booking
+                {
+                    BookingNumber = bookingNumber,
+                    CustomerName = request.CustomerName,
+                    CustomerPhone = request.CustomerPhone,
+                    GuestCount = request.GuestCount,
+                    TableId = request.TableId,
+                    BookingDate = request.BookingDate,
+                    Status = BookingStatus.Confirmed,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                table.Status = TableStatus.Reserved;
+
+                _context.Bookings.Add(booking);
+                await _context.SaveChangesAsync();
+
+                return Ok(booking);
             }
-
-            Console.WriteLine("✅ Table found: " + table.TableNumber);
-
-            if (table.Status != TableStatus.Available)
+            catch (Exception ex)
             {
-                Console.WriteLine("❌ Table not available");
-                return BadRequest("Table not available");
+                Console.WriteLine("❌ ERROR: " + ex.Message);
+                return StatusCode(500, ex.Message);
             }
-
-            if (request.GuestCount > table.Capacity)
-            {
-                Console.WriteLine("❌ Invalid guest count");
-                return BadRequest("Invalid guest count");
-            }
-
-            Console.WriteLine("🚀 Creating booking...");
-            if (request.BookingDate < DateTime.Now)
-                return BadRequest("Booking date must be future");
-
-            // 🔥 FIXED BOOKING NUMBER
-            var lastBooking = await _context.Bookings
-                .OrderByDescending(b => b.BookingId)
-                .Select(b => b.BookingNumber)
-                .FirstOrDefaultAsync();
-
-            int next = 1;
-            if (!string.IsNullOrEmpty(lastBooking))
-                next = int.Parse(lastBooking.Replace("BKG-", "")) + 1;
-
-            string bookingNumber = $"BKG-{next:D4}";
-
-            var booking = new Booking
-            {
-                BookingNumber = bookingNumber,
-                CustomerName = request.CustomerName,
-                CustomerPhone = request.CustomerPhone,
-                GuestCount = request.GuestCount,
-                TableId = request.TableId,
-                BookingDate = request.BookingDate,
-                Status = BookingStatus.Confirmed,
-                CreatedDate = DateTime.Now
-            };
-
-            table.Status = TableStatus.Reserved;
-
-            _context.Bookings.Add(booking);
-            await _context.SaveChangesAsync();
-            Console.WriteLine("🎉 Booking saved successfully");
-            return Ok(new
-            {
-                booking.BookingId,
-                booking.BookingNumber,
-                booking.CustomerName,
-                booking.CustomerPhone,
-                booking.GuestCount,
-                booking.Status
-            });
         }
+        // [HttpPost]
+        // public async Task<IActionResult> CreateBooking(CreateBookingRequest request)
+        // {
+        //     Console.WriteLine("🔥 CREATE BOOKING HIT");
+
+        //     Console.WriteLine($"Name: {request.CustomerName}");
+        //     Console.WriteLine($"Phone: {request.CustomerPhone}");
+        //     Console.WriteLine($"TableId: {request.TableId}");
+        //     Console.WriteLine($"Guests: {request.GuestCount}");
+
+        //     var table = await _context.DiningTables.FindAsync(request.TableId);
+
+        //     if (table == null)
+        //     {
+        //         Console.WriteLine("❌ Table not found" + request.TableId);
+        //         return NotFound("Table not found");
+        //     }
+
+        //     Console.WriteLine("✅ Table found: " + table.TableNumber);
+
+        //     if (table.Status != TableStatus.Available)
+        //     {
+        //         Console.WriteLine("❌ Table not available");
+        //         return BadRequest("Table not available");
+        //     }
+
+        //     if (request.GuestCount > table.Capacity)
+        //     {
+        //         Console.WriteLine("❌ Invalid guest count");
+        //         return BadRequest("Invalid guest count");
+        //     }
+
+        //     Console.WriteLine("🚀 Creating booking...");
+        //     if (request.BookingDate < DateTime.Now){
+        //         Console.WriteLine("❌ Past date rejected");
+        //         return BadRequest("Booking date must be future");
+        //     }
+
+        //     // 🔥 FIXED BOOKING NUMBER
+        //     var lastBooking = await _context.Bookings
+        //         .OrderByDescending(b => b.BookingId)
+        //         .Select(b => b.BookingNumber)
+        //         .FirstOrDefaultAsync();
+
+        //     int next = 1;
+        //     if (!string.IsNullOrEmpty(lastBooking))
+        //         next = int.Parse(lastBooking.Replace("BKG-", "")) + 1;
+
+        //     string bookingNumber = $"BKG-{next:D4}";
+
+        //     var booking = new Booking
+        //     {
+        //         BookingNumber = bookingNumber,
+        //         CustomerName = request.CustomerName,
+        //         CustomerPhone = request.CustomerPhone,
+        //         GuestCount = request.GuestCount,
+        //         TableId = request.TableId,
+        //         BookingDate = request.BookingDate,
+        //         Status = BookingStatus.Confirmed,
+        //         CreatedDate = DateTime.Now
+        //     };
+
+        //     table.Status = TableStatus.Reserved;
+
+        //     _context.Bookings.Add(booking);
+        //     await _context.SaveChangesAsync();
+        //     Console.WriteLine("🎉 Booking saved successfully");
+        //     return Ok(new
+        //     {
+        //         booking.BookingId,
+        //         booking.BookingNumber,
+        //         booking.CustomerName,
+        //         booking.CustomerPhone,
+        //         booking.GuestCount,
+        //         booking.Status
+        //     });
+        // }
 
         // GET BOOKINGS (FIXED RESPONSE)
         [HttpGet]
