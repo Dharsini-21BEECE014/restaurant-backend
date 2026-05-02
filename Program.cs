@@ -106,7 +106,7 @@ builder.Services.AddCors(options =>
             .AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
-            // .SetIsOriginAllowed(_ => true); // 🔥 FIX ALL DEPLOYMENT CORS ISSUES
+        // .SetIsOriginAllowed(_ => true); // 🔥 FIX ALL DEPLOYMENT CORS ISSUES
     });
 });
 
@@ -138,7 +138,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 // IMPORTANT ORDER
-app.UseCors("AllowReactApp");
+app.UseCors(policy =>
+    policy.AllowAnyOrigin()
+          .AllowAnyHeader()
+          .AllowAnyMethod()
+);
 
 app.UseAuthorization();
 
