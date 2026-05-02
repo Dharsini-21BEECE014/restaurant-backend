@@ -36,11 +36,14 @@ namespace RestaurantAPI.Controllers
         {
             try
             {
-                Console.WriteLine("🔥 Booking API called");
+                Console.WriteLine("🔥 CreateBooking called");
                 Console.WriteLine($"TableId: {request.TableId}");
                 Console.WriteLine($"GuestCount: {request.GuestCount}");
+                Console.WriteLine($"BookingDate: {request.BookingDate}");
 
-                var table = await _context.DiningTables.FindAsync(request.TableId);
+                // 1. GET TABLE SAFELY
+                var table = await _context.DiningTables
+                    .FirstOrDefaultAsync(t => t.TableId == request.TableId);
 
                 if (table == null)
                 {
@@ -48,9 +51,14 @@ namespace RestaurantAPI.Controllers
                     return NotFound("Table not found");
                 }
 
-                if (request.BookingDate < DateTime.UtcNow)
+                // 2. DATE VALIDATION (UTC SAFE)
+                if (request.BookingDate.ToUniversalTime() < DateTime.UtcNow)
+                {
+                    Console.WriteLine("❌ Invalid booking date");
                     return BadRequest("Booking date must be future");
+                }
 
+                // 3. GENERATE BOOKING NUMBER SAFE
                 var lastBooking = await _context.Bookings
                     .OrderByDescending(b => b.BookingId)
                     .Select(b => b.BookingNumber)
@@ -61,12 +69,14 @@ namespace RestaurantAPI.Controllers
                 if (!string.IsNullOrEmpty(lastBooking))
                 {
                     var numberPart = lastBooking.Replace("BKG-", "");
+
                     if (int.TryParse(numberPart, out int parsed))
                         next = parsed + 1;
                 }
 
                 string bookingNumber = $"BKG-{next:D4}";
 
+                // 4. CREATE BOOKING ENTITY
                 var booking = new Booking
                 {
                     BookingNumber = bookingNumber,
@@ -74,22 +84,41 @@ namespace RestaurantAPI.Controllers
                     CustomerPhone = request.CustomerPhone,
                     GuestCount = request.GuestCount,
                     TableId = request.TableId,
-                    BookingDate = request.BookingDate,
+                    BookingDate = request.BookingDate.ToUniversalTime(),
                     Status = BookingStatus.Confirmed,
                     CreatedDate = DateTime.UtcNow
                 };
 
+                // 5. UPDATE TABLE SAFELY (IMPORTANT FIX)
                 table.Status = TableStatus.Reserved;
 
+                // 6. SAVE EVERYTHING
                 _context.Bookings.Add(booking);
+
+                Console.WriteLine("🔥 Saving to database...");
+
                 await _context.SaveChangesAsync();
 
-                return Ok(booking);
+                Console.WriteLine("✅ Booking saved successfully");
+
+                return Ok(new
+                {
+                    booking.BookingId,
+                    booking.BookingNumber,
+                    booking.CustomerName,
+                    booking.Status
+                });
             }
             catch (Exception ex)
             {
-                Console.WriteLine("❌ ERROR: " + ex.Message);
-                return StatusCode(500, ex.Message);
+                Console.WriteLine("❌ MAIN ERROR: " + ex.Message);
+                Console.WriteLine("❌ INNER ERROR: " + ex.InnerException?.Message);
+
+                return StatusCode(500, new
+                {
+                    error = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
             }
         }
         // [HttpPost]
