@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RestaurantAPI.Data;
 using System.Text.Json.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
@@ -9,41 +10,50 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler =
             ReferenceHandler.IgnoreCycles;
     });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ CORS (ALLOW REACT)
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy
-            .WithOrigins("http://localhost:3000")
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "https://your-frontend.onrender.com"
+            )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
 
-// ✅ DATABASE
+// DB
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
+    options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
 );
 
 var app = builder.Build();
 
-// SWAGGER
+// Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// REMOVE THIS (NOT REQUIRED IN MODERN MINIMAL PIPELINE)
-// app.UseRouting();
-
-app.UseCors("AllowReactApp"); // MUST be before controllers
+app.UseCors("AllowReactApp");
 
 app.UseAuthorization();
 
 app.MapControllers();
 
+
+// AUTO MIGRATION (IMPORTANT)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 app.Run();
+
