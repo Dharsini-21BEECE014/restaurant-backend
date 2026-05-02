@@ -18,20 +18,52 @@ namespace RestaurantAPI.Controllers
         }
 
         // CREATE BOOKING
+        // [HttpPost]
+        // public async Task<IActionResult> CreateBooking(CreateBookingRequest request)
+        // {
+        //     var table = await _context.DiningTables.FindAsync(request.TableId);
+
+        //     if (table == null)
+        //         return NotFound("Table not found");
+
+        //     if (table.Status != TableStatus.Available)
+        //         return BadRequest("Table not available");
+
+        //     if (request.GuestCount <= 0 || request.GuestCount > table.Capacity)
+        //         return BadRequest("Invalid guest count");
         [HttpPost]
         public async Task<IActionResult> CreateBooking(CreateBookingRequest request)
         {
+            Console.WriteLine("🔥 CREATE BOOKING HIT");
+
+            Console.WriteLine($"Name: {request.CustomerName}");
+            Console.WriteLine($"Phone: {request.CustomerPhone}");
+            Console.WriteLine($"TableId: {request.TableId}");
+            Console.WriteLine($"Guests: {request.GuestCount}");
+
             var table = await _context.DiningTables.FindAsync(request.TableId);
 
             if (table == null)
+            {
+                Console.WriteLine("❌ Table not found");
                 return NotFound("Table not found");
+            }
+
+            Console.WriteLine("✅ Table found: " + table.TableNumber);
 
             if (table.Status != TableStatus.Available)
+            {
+                Console.WriteLine("❌ Table not available");
                 return BadRequest("Table not available");
+            }
 
-            if (request.GuestCount <= 0 || request.GuestCount > table.Capacity)
+            if (request.GuestCount > table.Capacity)
+            {
+                Console.WriteLine("❌ Invalid guest count");
                 return BadRequest("Invalid guest count");
+            }
 
+            Console.WriteLine("🚀 Creating booking...");
             if (request.BookingDate < DateTime.Now)
                 return BadRequest("Booking date must be future");
 
@@ -63,7 +95,7 @@ namespace RestaurantAPI.Controllers
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
-
+            Console.WriteLine("🎉 Booking saved successfully");
             return Ok(new
             {
                 booking.BookingId,

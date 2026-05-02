@@ -76,7 +76,6 @@
 // }
 
 // app.Run();
-
 using Microsoft.EntityFrameworkCore;
 using RestaurantAPI.Data;
 using System.Text.Json.Serialization;
@@ -84,42 +83,32 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler =
-            ReferenceHandler.IgnoreCycles;
-    });
+builder.Services.AddControllers();
 
+// Swagger (optional)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
 // =======================
-// ✅ CORS FIX (IMPORTANT)
+// CORS (MUST BE SIMPLE IN PRODUCTION)
 // =======================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
         policy
             .AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
-        // .SetIsOriginAllowed(_ => true); // 🔥 FIX ALL DEPLOYMENT CORS ISSUES
     });
 });
 
 
 // =======================
-// DB CONNECTION
+// DB
 // =======================
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new Exception("Database connection string is missing in appsettings.json");
-}
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString)
@@ -129,20 +118,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 var app = builder.Build();
 
 
-// Swagger (optional in production)
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseRouting();
+// =======================
 // IMPORTANT ORDER
-app.UseCors(policy =>
-    policy.AllowAnyOrigin()
-          .AllowAnyHeader()
-          .AllowAnyMethod()
-);
+// =======================
+app.UseRouting();
+
+app.UseCors("AllowAll");
 
 app.UseAuthorization();
 
