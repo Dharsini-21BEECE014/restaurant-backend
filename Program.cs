@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Controllers
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -28,11 +29,16 @@ builder.Services.AddCors(options =>
     });
 });
 
-// DB
+// DB Context (IMPORTANT FIX: null-safe)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new Exception("Database connection string is missing in appsettings.json");
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    )
+    options.UseNpgsql(connectionString)
 );
 
 var app = builder.Build();
@@ -43,14 +49,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseCors("AllowReactApp");
 
 app.UseAuthorization();
 
 app.MapControllers();
 
-
-// AUTO MIGRATION (IMPORTANT)
+// AUTO MIGRATION
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -58,4 +64,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-
