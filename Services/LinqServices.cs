@@ -51,19 +51,23 @@ namespace RestaurantAPI.Services
             return data;
         }
 
-        // 3. Tables occupied > 2 hours
+        // 3. Tables occupied > 2 hours (FIXED)
         public async Task<object> GetLongOccupiedTables()
         {
+            var now = DateTime.Now;
+
             var data = await _context.Bookings
                 .Include(b => b.Table)
                 .Where(b =>
                     b.Status == BookingStatus.Seated &&
-                    b.BookingDate.AddHours(2) < DateTime.Now)
+                    b.BookingDate.AddHours(2) < now)
                 .Select(b => new
                 {
                     b.Table.TableNumber,
                     b.BookingDate,
-                    Hours = EF.Functions.DateDiffHour(b.BookingDate, DateTime.Now)
+
+                    // PostgreSQL-safe duration calculation
+                    Hours = (int)(now - b.BookingDate).TotalHours
                 })
                 .ToListAsync();
 

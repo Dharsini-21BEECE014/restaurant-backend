@@ -23,7 +23,6 @@ C:\Users\arun2\OneDrive\Desktop\RestaurantAPI\bin\Debug\net10.0\Microsoft.Entity
 C:\Users\arun2\OneDrive\Desktop\RestaurantAPI\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Abstractions.dll
 C:\Users\arun2\OneDrive\Desktop\RestaurantAPI\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Design.dll
 C:\Users\arun2\OneDrive\Desktop\RestaurantAPI\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Relational.dll
-C:\Users\arun2\OneDrive\Desktop\RestaurantAPI\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.SqlServer.dll
 C:\Users\arun2\OneDrive\Desktop\RestaurantAPI\bin\Debug\net10.0\Microsoft.Extensions.DependencyModel.dll
 C:\Users\arun2\OneDrive\Desktop\RestaurantAPI\bin\Debug\net10.0\Microsoft.Identity.Client.dll
 C:\Users\arun2\OneDrive\Desktop\RestaurantAPI\bin\Debug\net10.0\Microsoft.Identity.Client.Extensions.Msal.dll
@@ -180,7 +179,6 @@ C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\bin\Debug\net10.0\Micro
 C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Abstractions.dll
 C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Design.dll
 C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Relational.dll
-C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.SqlServer.dll
 C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\bin\Debug\net10.0\Microsoft.Extensions.DependencyModel.dll
 C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\bin\Debug\net10.0\Microsoft.Identity.Client.dll
 C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\bin\Debug\net10.0\Microsoft.Identity.Client.Extensions.Msal.dll
@@ -312,3 +310,4 @@ C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\obj\Debug\net10.0\refin
 C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\obj\Debug\net10.0\RestaurantAPI.pdb
 C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\obj\Debug\net10.0\RestaurantAPI.genruntimeconfig.cache
 C:\Users\arun2\OneDrive\Desktop\Restaurant\restaurantAPI\obj\Debug\net10.0\ref\RestaurantAPI.dll
+C:\Users\arun2\OneDrive\Desktop\RestaurantAPI\obj\Debug\net10.0\RestaurantAPI.sourcelink.json
