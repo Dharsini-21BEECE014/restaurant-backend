@@ -4,6 +4,7 @@ using RestaurantAPI.Data;
 using RestaurantAPI.Models;
 using RestaurantAPI.DTOs;
 
+
 namespace RestaurantAPI.Controllers
 {
     [ApiController]
@@ -121,12 +122,16 @@ namespace RestaurantAPI.Controllers
         //     return Ok(order);
         // }
 
+        // 
         [HttpPost]
         public async Task<IActionResult> CreateOrder(CreateOrderRequest request)
         {
             try
             {
-                if (request == null || request.Items == null || !request.Items.Any())
+                // =========================
+                // VALIDATION
+                // =========================
+                if (request == null || request.Items == null)
                     return BadRequest("Order items required");
 
                 var booking = await _context.Bookings
@@ -135,6 +140,17 @@ namespace RestaurantAPI.Controllers
                 if (booking == null)
                     return NotFound("Booking not found");
 
+                if (booking.Status != BookingStatus.Seated)
+                    return BadRequest("Booking must be seated before ordering");
+
+                var tableExists = await _context.DiningTables
+                    .AnyAsync(t => t.TableId == booking.TableId);
+
+                if (!tableExists)
+                    return BadRequest("Invalid table assigned to booking");
+                // =========================
+                // CHECK EXISTING ORDER
+                // =========================
                 var existingOrder = await _context.Orders
                     .Include(o => o.OrderItems)
                     .FirstOrDefaultAsync(o =>
@@ -144,31 +160,38 @@ namespace RestaurantAPI.Controllers
 
                 if (existingOrder != null)
                 {
-                    existingOrder.OrderItems ??= new List<OrderItem>();
+                    if (existingOrder.OrderItems == null)
+                        existingOrder.OrderItems = new List<OrderItem>();
 
                     foreach (var i in request.Items)
                     {
-                        var menu = await _context.MenuItems.FindAsync(i.MenuItemId);
+                        var menu = await _context.MenuItems
+                            .FirstOrDefaultAsync(m => m.MenuItemId == i.MenuItemId);
 
                         if (menu == null)
-                            return BadRequest("Invalid menu item");
+                            return BadRequest($"Invalid menu item: {i.MenuItemId}");
 
-                        existingOrder.OrderItems.Add(new OrderItem
+                        var newItem = new OrderItem
                         {
-                            MenuItemId = i.MenuItemId,
+                            MenuItemId = menu.MenuItemId,
                             Quantity = i.Quantity,
                             UnitPrice = menu.Price,
                             TotalPrice = menu.Price * i.Quantity,
                             KitchenStatus = KitchenStatus.Pending
-                        });
+                        };
 
-                        existingOrder.TotalAmount += menu.Price * i.Quantity;
+                        existingOrder.OrderItems.Add(newItem);
+                        existingOrder.TotalAmount += newItem.TotalPrice;
                     }
 
                     await _context.SaveChangesAsync();
+
                     return Ok(existingOrder);
                 }
 
+                // =========================
+                // CREATE NEW ORDER
+                // =========================
                 var order = new Order
                 {
                     BookingId = booking.BookingId,
@@ -182,21 +205,23 @@ namespace RestaurantAPI.Controllers
 
                 foreach (var i in request.Items)
                 {
-                    var menu = await _context.MenuItems.FindAsync(i.MenuItemId);
+                    var menu = await _context.MenuItems
+                        .FirstOrDefaultAsync(m => m.MenuItemId == i.MenuItemId);
 
                     if (menu == null)
-                        return BadRequest("Invalid menu item");
+                        return BadRequest($"Invalid menu item: {i.MenuItemId}");
 
-                    order.OrderItems.Add(new OrderItem
+                    var item = new OrderItem
                     {
-                        MenuItemId = i.MenuItemId,
+                        MenuItemId = menu.MenuItemId,
                         Quantity = i.Quantity,
                         UnitPrice = menu.Price,
                         TotalPrice = menu.Price * i.Quantity,
                         KitchenStatus = KitchenStatus.Pending
-                    });
+                    };
 
-                    total += menu.Price * i.Quantity;
+                    order.OrderItems.Add(item);
+                    total += item.TotalPrice;
                 }
 
                 order.TotalAmount = total;
@@ -208,12 +233,11 @@ namespace RestaurantAPI.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
-
+                // 🔥 SAFE ERROR RESPONSE (IMPORTANT)
                 return StatusCode(500, new
                 {
                     error = ex.Message,
-                    stack = ex.StackTrace
+                    inner = ex.InnerException?.Message
                 });
             }
         }
