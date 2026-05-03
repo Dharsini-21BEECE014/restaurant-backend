@@ -126,37 +126,19 @@ namespace RestaurantAPI.Controllers
         {
             try
             {
-                Console.WriteLine("🔥 ORDER API HIT");
-                Console.WriteLine($"BookingId: {request.BookingId}");
-
-                // =========================
-                // VALIDATION
-                // =========================
                 if (request == null || request.Items == null || !request.Items.Any())
-                {
-                    Console.WriteLine("❌ Empty order items");
                     return BadRequest("Order items required");
-                }
 
-                var booking = await _context.Bookings.FindAsync(request.BookingId);
+                var booking = await _context.Bookings
+                    .FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
 
                 if (booking == null)
-                {
-                    Console.WriteLine("❌ Booking not found");
                     return NotFound("Booking not found");
-                }
 
-                Console.WriteLine($"Booking Status: {booking.Status}");
+                // ⚠️ relaxed check (IMPORTANT FIX)
+                if (booking.Status == BookingStatus.Cancelled)
+                    return BadRequest("Booking is cancelled");
 
-                if (booking.Status != BookingStatus.Seated)
-                {
-                    Console.WriteLine("❌ Booking not seated");
-                    return BadRequest("Booking must be seated");
-                }
-
-                // =========================
-                // CHECK EXISTING ORDER
-                // =========================
                 var existingOrder = await _context.Orders
                     .Include(o => o.OrderItems)
                     .FirstOrDefaultAsync(o =>
@@ -166,60 +148,33 @@ namespace RestaurantAPI.Controllers
 
                 if (existingOrder != null)
                 {
-                    Console.WriteLine("🔁 Adding to existing order");
+                    existingOrder.OrderItems ??= new List<OrderItem>();
 
                     foreach (var i in request.Items)
                     {
                         var menu = await _context.MenuItems.FindAsync(i.MenuItemId);
 
                         if (menu == null)
-                        {
-                            Console.WriteLine($"❌ Menu not found: {i.MenuItemId}");
                             return BadRequest("Invalid menu item");
-                        }
 
-                        var item = new OrderItem
+                        existingOrder.OrderItems.Add(new OrderItem
                         {
                             MenuItemId = i.MenuItemId,
                             Quantity = i.Quantity,
                             UnitPrice = menu.Price,
                             TotalPrice = menu.Price * i.Quantity,
                             KitchenStatus = KitchenStatus.Pending
-                        };
+                        });
 
-                        existingOrder.OrderItems.Add(item);
-                        existingOrder.TotalAmount += item.TotalPrice;
+                        existingOrder.TotalAmount += menu.Price * i.Quantity;
                     }
 
                     await _context.SaveChangesAsync();
-                    Console.WriteLine("✅ Existing order updated");
-
                     return Ok(existingOrder);
-                }
-
-                // =========================
-                // CREATE NEW ORDER
-                // =========================
-                Console.WriteLine("🆕 Creating new order");
-
-                var last = await _context.Orders
-                    .OrderByDescending(o => o.OrderId)
-                    .Select(o => o.OrderNumber)
-                    .FirstOrDefaultAsync();
-
-                int next = 1;
-
-                if (!string.IsNullOrEmpty(last))
-                {
-                    var numberPart = last.Replace("ORD-", "");
-
-                    if (int.TryParse(numberPart, out int parsed))
-                        next = parsed + 1;
                 }
 
                 var order = new Order
                 {
-                    OrderNumber = $"ORD-{next:D4}",
                     BookingId = booking.BookingId,
                     TableId = booking.TableId,
                     OrderDate = DateTime.UtcNow,
@@ -234,40 +189,29 @@ namespace RestaurantAPI.Controllers
                     var menu = await _context.MenuItems.FindAsync(i.MenuItemId);
 
                     if (menu == null)
-                    {
-                        Console.WriteLine($"❌ Menu not found: {i.MenuItemId}");
                         return BadRequest("Invalid menu item");
-                    }
 
-                    var item = new OrderItem
+                    order.OrderItems.Add(new OrderItem
                     {
                         MenuItemId = i.MenuItemId,
                         Quantity = i.Quantity,
                         UnitPrice = menu.Price,
                         TotalPrice = menu.Price * i.Quantity,
                         KitchenStatus = KitchenStatus.Pending
-                    };
+                    });
 
-                    total += item.TotalPrice;
-                    order.OrderItems.Add(item);
+                    total += menu.Price * i.Quantity;
                 }
 
                 order.TotalAmount = total;
 
                 _context.Orders.Add(order);
-
-                Console.WriteLine("💾 Saving order...");
                 await _context.SaveChangesAsync();
-
-                Console.WriteLine("✅ Order created successfully");
 
                 return Ok(order);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("❌ MAIN ERROR: " + ex.Message);
-                Console.WriteLine("❌ INNER ERROR: " + ex.InnerException?.Message);
-
                 return StatusCode(500, new
                 {
                     error = ex.Message,

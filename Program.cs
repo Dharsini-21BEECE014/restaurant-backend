@@ -95,12 +95,16 @@ builder.Services.AddSwaggerGen();
 // =======================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
         policy
+            .WithOrigins(
+                "https://restaurant-booking-j4kf.onrender.com"
+            )
             .AllowAnyOrigin()
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -123,7 +127,7 @@ var app = builder.Build();
 // =======================
 app.UseRouting();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 app.UseAuthorization();
 
