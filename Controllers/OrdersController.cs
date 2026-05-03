@@ -192,8 +192,28 @@ namespace RestaurantAPI.Controllers
                 // =========================
                 // CREATE NEW ORDER
                 // =========================
+                // =========================
+                // CREATE NEW ORDER
+                // =========================
+
+                // 🔥 GENERATE ORDER NUMBER FIRST
+                var lastOrder = await _context.Orders
+                    .OrderByDescending(o => o.OrderId)
+                    .Select(o => o.OrderNumber)
+                    .FirstOrDefaultAsync();
+
+                int next = 1;
+
+                if (!string.IsNullOrEmpty(lastOrder))
+                {
+                    var num = lastOrder.Replace("ORD-", "");
+                    int.TryParse(num, out next);
+                    next++;
+                }
+
                 var order = new Order
                 {
+                    OrderNumber = $"ORD-{next:D4}", // ✅ FIXED HERE
                     BookingId = booking.BookingId,
                     TableId = booking.TableId,
                     OrderDate = DateTime.UtcNow,
