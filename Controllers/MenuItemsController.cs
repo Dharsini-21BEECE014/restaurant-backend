@@ -19,10 +19,35 @@ namespace RestaurantAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            return Ok(await _context.MenuItems
-                .Include(m => m.MenuCategory)
-                .Where(m => m.IsAvailable)
-                .ToListAsync());
+            try
+            {
+                Console.WriteLine("🔥 Menu API called");
+
+                var items = await _context.MenuItems
+                    .Include(m => m.MenuCategory)
+                    .Where(m => m.IsAvailable == true)
+                    .ToListAsync();
+
+                return Ok(items.Select(m => new
+                {
+                    m.MenuItemId,
+                    m.Name,
+                    m.Price,
+                    m.Description,
+                    Category = m.MenuCategory != null ? m.MenuCategory.Name : "No Category"
+                }));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("❌ MENU ERROR: " + ex.Message);
+                Console.WriteLine("❌ INNER: " + ex.InnerException?.Message);
+
+                return StatusCode(500, new
+                {
+                    error = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
+            }
         }
 
         [HttpGet("category/{id}")]
