@@ -76,7 +76,8 @@ namespace RestaurantAPI.Controllers
             var orders = await _context.Orders
                 .Where(o =>
                     o.TableId == id &&
-                    o.Status != OrderStatus.Completed)
+                    o.Status != OrderStatus.Completed &&
+                    o.Status != OrderStatus.Billed)
                 .ToListAsync();
 
             foreach (var order in orders)
