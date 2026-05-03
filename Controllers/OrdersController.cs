@@ -279,10 +279,22 @@ namespace RestaurantAPI.Controllers
         // =========================
         // GET ORDERS
         // =========================
+        // [HttpGet]
+        // public async Task<IActionResult> Get()
+        // {
+        //     return Ok(await _context.Orders.ToListAsync());
+        // }
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            return Ok(await _context.Orders.ToListAsync());
+            var orders = await _context.Orders
+                .Where(o => o.Status != OrderStatus.Billed &&
+                            o.Status != OrderStatus.Completed)
+                .Include(o => o.OrderItems)
+                .ThenInclude(i => i.MenuItem)
+                .ToListAsync();
+
+            return Ok(orders);
         }
 
         // =========================
@@ -377,7 +389,7 @@ namespace RestaurantAPI.Controllers
 
             foreach (var order in orders)
             {
-                order.Status = OrderStatus.Billed;
+                order.Status = OrderStatus.Completed;
                 order.PaidAmount = order.TotalAmount;
                 order.PaidDate = DateTime.Now;
             }
