@@ -93,6 +93,20 @@ builder.Services.AddSwaggerGen();
 // =======================
 // CORS (MUST BE SIMPLE IN PRODUCTION)
 // =======================
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("AllowFrontend", policy =>
+//     {
+//         policy
+//             .WithOrigins(
+//                 "https://restaurant-booking-j4kf.onrender.com"
+//             )
+//             .AllowAnyOrigin()
+//             .AllowAnyHeader()
+//             .AllowAnyMethod()
+//             .AllowCredentials();
+//     });
+// });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -101,13 +115,11 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "https://restaurant-booking-j4kf.onrender.com"
             )
-            .AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
 });
-
 
 // =======================
 // DB
