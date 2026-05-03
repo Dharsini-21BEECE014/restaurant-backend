@@ -63,6 +63,7 @@ namespace RestaurantAPI.Controllers
         // =========================
         // COMPLETE TABLE (CORRECT LOGIC)
         // =========================
+        // 
         [HttpPut("{id}/complete")]
         public async Task<IActionResult> CompleteTable(int id)
         {
@@ -72,39 +73,34 @@ namespace RestaurantAPI.Controllers
             if (table == null)
                 return NotFound("Table not found");
 
-            // STEP 1: Get active orders
             var orders = await _context.Orders
                 .Where(o =>
                     o.TableId == id &&
-                    o.Status != OrderStatus.Billed &&
                     o.Status != OrderStatus.Completed)
                 .ToListAsync();
 
-            // STEP 2: AUTO BILL (IMPORTANT FIX)
             foreach (var order in orders)
             {
-                order.Status = OrderStatus.Billed;
+                order.Status = OrderStatus.Completed;
                 order.PaidAmount = order.TotalAmount;
-                order.PaidDate = DateTime.Now;
+                order.PaidDate = DateTime.UtcNow;
             }
 
-            // STEP 3: Close booking
             var booking = await _context.Bookings
                 .FirstOrDefaultAsync(b =>
                     b.TableId == id &&
-                    b.Status == BookingStatus.Seated);
+                    b.Status != BookingStatus.Completed);
 
             if (booking != null)
                 booking.Status = BookingStatus.Completed;
 
-            // STEP 4: FREE TABLE
             table.Status = TableStatus.Available;
 
             await _context.SaveChangesAsync();
 
             return Ok(new
             {
-                message = "✅ Table completed successfully"
+                message = "Table completed successfully"
             });
         }
         [HttpPut("{id}/maintenance")]
