@@ -50,6 +50,7 @@ namespace RestaurantAPI.Controllers
                 .ThenInclude(i => i.MenuItem)
                 .Where(o =>
                     o.TableId == tableId &&
+                    o.Status != OrderStatus.Completed &&
                     o.Status != OrderStatus.Billed)
                 .OrderByDescending(o => o.OrderDate)
                 .FirstOrDefaultAsync();
@@ -90,7 +91,8 @@ namespace RestaurantAPI.Controllers
             var booking = await _context.Bookings
                 .FirstOrDefaultAsync(b =>
                     b.TableId == id &&
-                    b.Status != BookingStatus.Completed);
+                    b.Status != BookingStatus.Completed &&
+                    b.Status != BookingStatus.Cancelled);
 
             if (booking != null)
                 booking.Status = BookingStatus.Completed;
