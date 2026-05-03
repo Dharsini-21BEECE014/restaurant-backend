@@ -135,10 +135,6 @@ namespace RestaurantAPI.Controllers
                 if (booking == null)
                     return NotFound("Booking not found");
 
-                // ⚠️ relaxed check (IMPORTANT FIX)
-                if (booking.Status == BookingStatus.Cancelled)
-                    return BadRequest("Booking is cancelled");
-
                 var existingOrder = await _context.Orders
                     .Include(o => o.OrderItems)
                     .FirstOrDefaultAsync(o =>
@@ -212,10 +208,12 @@ namespace RestaurantAPI.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
+
                 return StatusCode(500, new
                 {
                     error = ex.Message,
-                    inner = ex.InnerException?.Message
+                    stack = ex.StackTrace
                 });
             }
         }
